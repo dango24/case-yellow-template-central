@@ -10,6 +10,8 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       RoleName: CentralGWLambdaRole
+       ManagedPolicyArns:
+         - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -32,8 +34,6 @@ Resources:
                   - "logs:PutLogEvents"
                 Resource:
                   - Sub "arn:aws:logs:${AWS::Region}:*:*"
-    ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 
   # Lambda
 
