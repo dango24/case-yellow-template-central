@@ -62,7 +62,7 @@ Resources:
           Properties:
             Path: /central/next-web-site
             Method: GET
-            RestApiId: !Ref central-next-web-site-api
+            RestApiId: !Ref CentralNextWebSiteApi
       Environment:
         Variables:
           REGION: eu-central-1
@@ -70,7 +70,7 @@ Resources:
 
   # Api
 
-  central-next-web-site-api:
+  CentralNextWebSiteApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: test
