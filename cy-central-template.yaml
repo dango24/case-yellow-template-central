@@ -10,8 +10,8 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       RoleName: CentralGWLambdaRole
-       ManagedPolicyArns:
-         - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
