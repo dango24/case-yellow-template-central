@@ -50,12 +50,12 @@ Resources:
         Fn::GetAtt:
           - "CentralGWLambdaRole"
           - "Arn"
-#      VpcConfig:
-#        SubnetIds:
-#          - subnet-7421e91f
-#          - subnet-e3131a99
-#        SecurityGroupIds:
-#          - sg-0a9aeeb3e7d9825de
+      VpcConfig:
+        SubnetIds:
+          - subnet-7421e91f
+          - subnet-e3131a99
+        SecurityGroupIds:
+          - sg-0a9aeeb3e7d9825de
       Events:
         CentralNextWebSiteApi:
           Type: Api
