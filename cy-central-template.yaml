@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: CY Lambda's
+
+Resources:
+
+  # IAM role
+
+  CentralGWLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CentralGWLambdaRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service: "lambda.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: "LambdaRolePolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource:
+                  - Sub "arn:aws:logs:${AWS::Region}:*:*"
+
+  # Lambda
+
+  CentralNextWebSiteLambda:
+    Type: 'AWS::Serverless::Function'
+    DependsOn: CentralGWLambdaRole
+    Properties:
+      FunctionName: "CentralNextWebSiteLambda"
+      Handler: next_web_site.handler
+      Runtime: python3.6
+      CodeUri: ./CentralLambdaCode
+      Description: 'Central Next Web Site Lambda'
+      MemorySize: 128
+      Timeout: 30
+      Role:
+        Fn::GetAtt:
+          - "CentralGWLambdaRole"
+          - "Arn"
+      VpcConfig:
+        SubnetIds:
+          - subnet-7421e91f
+          - subnet-e3131a99
+        SecurityGroupIds:
+          - sg-0a9aeeb3e7d9825de
+      Events:
+        CentralNextWebSiteApi:
+          Type: Api
+          Properties:
+            Path: /central/next-web-site
+            Method: GET
+            RestApiId: !Ref central-next-web-site-api
+      Environment:
+        Variables:
+          REGION: eu-central-1
+
+
+  # Api
+
+  central-next-web-site-api:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: test
+      EndpointConfiguration: REGIONAL
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          title: "Central Next Web Site API"
+        paths:
+          /central/next-web-site:
+            get:
+              parameters:
+              - name: "Case-Yellow-User"
+                in: "header"
+                required: true
+                type: "string"
+              x-amazon-apigateway-request-validator: "Validate query string parameters and headers"
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CentralNextWebSiteLambda.Arn}/invocations
+                responses: {}
+                httpMethod: "POST"
+                type: "aws_proxy"
+        x-amazon-apigateway-request-validators:
+          Validate query string parameters and headers:
+            validateRequestParameters: true
+            validateRequestBody: false

@@ -1,0 +1,10 @@
+version: 0.1
+phases:
+  install:
+    commands:
+      - aws cloudformation package --template-file cy-central-template.yaml --s3-bucket cy-template-build-artifact --output-template-file cy-central-output-samTemplate.yaml
+artifacts:
+  type: zip
+  files:
+    - cy-central-template.yaml
+    - cy-central-output-samTemplate.yaml
