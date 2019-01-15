@@ -1,7 +1,7 @@
 from botocore.vendored import requests
 
 def handler(event, context):
-    print("Received getNextSpeedTestWebSite GET request, from user: {}".format(event.user))
+    print("Received getNextSpeedTestWebSite GET request, from user: {}".format(event.get("user")))
 
     headers = {"Content-Type": "application/json",
                "Case-Yellow-User": event.user}
