@@ -1,0 +1,21 @@
+## ACME Quarantine
+## Packet Filter Template for com.amazon.internal anchor.
+## Written by Gerrit DeWitt (gerritd@amazon.com)
+## Version 1.5.0.2 - 2017-12-11
+## This file is just configuration information.
+
+## Options - Global unless overridden in a rule definition:
+
+## TRAFFIC NORMALIZATION
+scrub inet fragment reassemble
+
+## QUEUING
+
+## TRANSLATION
+
+## FILTER
+
+## Internal networks - allow incoming policy:
+pass in on {en0} inet proto {tcp,udp,icmp} from any to {en0} keep state
+
+## End of com.amazon.internal anchor.

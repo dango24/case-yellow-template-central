@@ -1,0 +1,9 @@
+#Key for PROD
+
+from="10.1.14.*,10.114.64.*,10.114.65.*,10.114.66.*,10.114.67.*,10.114.68.*,10.114.69.*,10.1.15.*,10.157.2.*,10.157.3.*,10.224.85.*" ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6YuGkjoqIxgTOqubxydHIkPajUi7JZmJTNCT3bMJjI//EUUG3br7B5DXjciDQqaWEe2edESN5G4sYs5WI8kSIHFIgiZK+Drz4EW8Cxtmkzg8JJuF0JqnliDiQosKhqYyMUiv50yboFPUD76ifB2w4ltmi7NP4P51JzTSYdLip4dJKqeiPiNFDCzdrW5VhSFvmL62ZBSYErHlRX+6zwJp0YwZiUsw/zoQtGiO5wlP/3xiHBaAqF804hLG6vgO1laOvhM2ZUhgpKNdCkTk6WkBqyOh5/PT/m1GRTd1mtydeQ5kUIs2nGHjc0Ok2aP7ZVEW3UHnzmdTgDEbHYcN5mZ2B vm-user@security-vm-prox-b-co-pdx-2c-6bc35907.us-west-2.amazon.com@Created_by_codybern_on_Thu_Nov_29_17:59:53_UTC_2018
+
+from="10.1.14.*,10.114.64.*,10.114.65.*,10.114.66.*,10.114.67.*,10.114.68.*,10.114.69.*,10.1.15.*,10.157.2.*,10.157.3.*,10.224.85.*" ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDYBxly/7ADl2AZXSfLkCPiSkF45LpW6+uuiP6mg79SVZg5LGoTLjQyrN4MT28UVOYoPS90m10UysW3Po11ZoeL0APQR+W11tUJvfqeCi6SvQCK1A3sL0WusAisoeniYNWIQu9qx5kM8IlMzdt4NJIjs2VTdhYv1dX6e6UNbeOAJUrW1CSiuu5a2rkCoXsHmRzpJ7BbLALwYbFV7AXdqdryrsPb7C557fGa4yUK40VG4BggEDLNWtiq5ivUkWLZQsmKo2X3RWR+bwp/yOa++sMT1ZGHQoEOxdKhsFfTWSL7E+kLgCPOAMTDs+pVyvMsg8Gg8qLZryjGAzuGfR6KfWSZ vm-user@security-vm-prox-b-co-pdx-2c-6bc35907.us-west-2.amazon.com@Created_by_tobinb_on_Tue_Nov_13_20:53:37_UTC_2018
+
+#RSA Fingerprint for PROD : 2048 SHA256:lob3ghAUxwkFHz660WI8q7stAudVVmF9KrMPS6jgSak vm-user@security-vm-prox-b-co-pdx-2c-6bc35907.us-west-2.amazon.com@Created_by_codybern_on_Thu_Nov_29_17:59:53_UTC_2018 (RSA)
+
+#RSA2 Fingerprint for PROD : 2048 SHA256:d9mdzvd9lEgvOh1nlspGfOD1uvOqfP3EyzypIzoU7rs vm-user@security-vm-prox-b-co-pdx-2c-6bc35907.us-west-2.amazon.com@Created_by_tobinb_on_Tue_Nov_13_20:53:37_UTC_2018 (RSA)

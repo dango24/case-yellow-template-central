@@ -1,0 +1,189 @@
+#!/System/Library/Frameworks/Python.framework/Versions/Current/bin/python
+
+## Mac scannixsetup
+## Copyright Amazon
+## Written by Gerrit DeWitt (gerritd@)
+## Updated by Jason Simmons (jasosimm), Luke Andrews (lukean)
+## Updated 2017-12-08
+
+import datetime, os, sys, plistlib, subprocess, syslog
+import hashlib
+import logging
+
+def printMessage(message):
+## Print message to console and in syslog.
+	syslog.syslog(syslog.LOG_INFO,message)
+	print(message)
+
+def printError(message):
+## Print error message to console and in syslog.
+	syslog.syslog(syslog.LOG_ERR,message)
+	logging.error(message)
+
+def azSubprocess(cmd):
+# Safely run a command in such a way that we always have the output and return code.
+	try:
+		output = subprocess.check_output(cmd)
+		returnCode = 0
+	except subprocess.CalledProcessError, errorObject:
+		output = ''
+		returnCode = errorObject.returncode
+	return output, returnCode
+
+def azReadPlistFromStr(strData):
+	## Converts a string of XML plist content to a dict using plistlib.
+	try:
+		dictionary = plistlib.readPlistFromString(strData)
+	except:
+		dictionary = {}
+	return dictionary
+
+def userExists():
+## Returns true if the scan-nix user account exists.
+	attrsList = scannixDict['userAttrDict']
+	userRecordPath = '/Users/%s' % attrsList['RecordName']
+	# Defaults:
+	userExists = False
+	matchingAttrCount = 0
+
+	cmd = ['/usr/bin/dscl','-plist','/Local/Default','-read',userRecordPath]
+	[output, returnCode] = azSubprocess(cmd)
+	if returnCode == 0 and output:
+		outputDict = azReadPlistFromStr(output)
+		if outputDict:
+			for (key,value) in outputDict.iteritems():
+				theAttr = key.replace('dsAttrTypeStandard:','')
+				theValue = value[0]
+				if (theAttr in attrsList) and (theValue == attrsList[theAttr]):
+					matchingAttrCount = matchingAttrCount + 1
+
+	if matchingAttrCount == len(attrsList):
+		userExists = True
+	# Return:
+	return userExists
+
+def createUserAcct():
+## Creates the scan-nix user account.
+	attrsList = scannixDict['userAttrDict']
+	removeAttrsList = scannixDict['userAttrRemovalDict']
+	userRecordPath = '/Users/%s' % attrsList['RecordName']
+	# Defaults:
+	createdAcct = False
+	# Create user record:
+	cmd = ['/usr/bin/dscl','/Local/Default','-create',userRecordPath]
+	[output, returnCode] = azSubprocess(cmd)
+	returnCodeSum = returnCode
+	# Populate the other required attributes:
+	for theAttr in attrsList:
+		if theAttr != 'RecordName': # RecordName was added with the initial dscl create command.
+			cmd = ['/usr/bin/dscl','/Local/Default','-create',userRecordPath,theAttr, attrsList[theAttr]]
+			[output, returnCode] = azSubprocess(cmd)
+			returnCodeSum = returnCodeSum + returnCode
+	# Remove attributes that should be missing (to make the account "hidden"):
+	for theAttr in removeAttrsList:
+		cmd = ['/usr/bin/dscl','/Local/Default','-delete',userRecordPath,theAttr]
+		[output, returnCode] = azSubprocess(cmd)
+		returnCodeSum = returnCodeSum + returnCode
+		
+	if returnCodeSum == 0:
+		createdAcct = True
+		printMessage('Created scan-nix user account.')
+	else:
+		printError('Error creating scan-nix user account!')
+
+	# Return:
+	return createdAcct
+
+def createHomeForUser():
+## Creates the home and .ssh folders for the scan-nix user account.
+	uidNum = int(scannixDict['userAttrDict']['UniqueID'])
+	homeDirPath = scannixDict['userAttrDict']['NFSHomeDirectory']
+	sshDirPath = '%s/.ssh' % homeDirPath
+
+	if not os.path.exists(homeDirPath):
+		os.mkdir(homeDirPath,0700)
+	if not os.path.exists(sshDirPath):
+		os.mkdir(sshDirPath,0700)
+	os.chown(homeDirPath,uidNum,0)
+	os.chown(sshDirPath,uidNum,0)
+
+def installPubKeys():
+## Copies scan-nix authorized_keys file and sets permissions.
+	homeDirPath = scannixDict['userAttrDict']['NFSHomeDirectory']
+	sshAuthorizedKeysDestPath = '%s/.ssh/authorized_keys' % homeDirPath
+	sshAuthorizedKeysSourcePath = '/usr/local/amazon/var/scannix/authorized_keys'
+	# Read source:
+	file = open(sshAuthorizedKeysSourcePath,'r')
+	data = file.read()
+	file.close()
+	# Write authorized_keys: 
+	file = open(sshAuthorizedKeysDestPath,'w')
+	file.write(data)
+	file.close()
+	os.chmod(sshAuthorizedKeysDestPath,0600)
+	
+def verifySudoRules():
+    # Returns true if the sudoers file matches the expected hash.
+	sudoersCmd = scannixDict['sudoersConfig'][1]
+	expected_hash = '74b6ec0ed0a61d4946a3ce5c562d8936'
+        sudoers_verified = False
+	try:
+		hasher = hashlib.md5()
+		with open('/etc/sudoers.d/scannix', 'rb') as f:
+			buff = f.read()
+			hasher.update(buff)
+			file_hash = hasher.hexdigest()
+
+			if file_hash == expected_hash:
+				sudoers_verified = True
+	except:
+		printMessage('/etc/sudoers.d/scannix does not exist.')
+	return sudoers_verified
+
+def createSudoRules():
+## Writes the scan-nix config to the sudoers file.
+	sudoersConfig = scannixDict['sudoersConfig']
+	sudoersAdditions = '\n'.join(sudoersConfig)
+	# Write change to sudoers:
+	file = open('/etc/sudoers.d/scannix','w+')
+	file.write(sudoersAdditions + '\n')
+	file.close()
+
+## BEGIN: createLogbashSymlink() ##
+def createLogbashSymlink():
+	if not os.path.lexists('/usr/local/bin/logbash'):
+		os.symlink('/bin/bash','/usr/local/bin/logbash')
+
+def main():
+	## MAIN
+	global scannixDict
+	scannixDict = plistlib.readPlist('/usr/local/amazon/var/scannix/scan-nix.plist')
+	
+	# Create the user account if required:
+	if not userExists():
+		printMessage('Creating the scan-nix user account...')
+		createUserAcct()
+	else:
+		printMessage('The scan-nix user account exists.')
+
+	# Create the user's home if required:
+	createHomeForUser()
+	# Install public keys for scan-nix user to SSH:
+	installPubKeys()
+	# Update sudoers if necessary:
+	if not verifySudoRules():
+		printMessage('Adding scan-nix configuration to the sudoers file...')
+		createSudoRules()
+	else:
+		printMessage('The scan-nix configuration is present in the sudoers file.')
+
+	# Temporary createLogbashSymlink:
+	createLogbashSymlink()
+
+if __name__ == '__main__':
+	global azIdentifier
+	azIdentifier = 'com.amazon.scannixsetup'
+	try:
+	   main()
+	except:
+	   printError('Generic exception.')

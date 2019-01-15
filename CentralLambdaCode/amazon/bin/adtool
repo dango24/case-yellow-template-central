@@ -1,0 +1,147 @@
+#!/System/Library/Frameworks/Python.framework/Versions/Current/bin/python
+
+## adtool
+## Written by Gerrit DeWitt (gerritd@amazon.com)
+## Modified by Jason Simmons (jasosimm@amazon.com)
+## Version 2.9.8.5 - 2018-10-25 Copyright Amazon
+## User-context component for binding to Active Directory, given certain environment variables.
+
+import os, sys, datetime, getpass
+sys.path.insert(0,'/usr/local/amazon/libexec/acme')
+from common_acme import *
+
+## SUBROUTINES
+
+def azShowToolHelp():
+## Displays syntax help.
+	print '''
+-------
+Active Directory Tool (adtool): Checks status and performs client Active Directory configuration per Amazon requirements.
+Version 2.9.8.4d Copyright Amazon
+https://w.amazon.com/index.php/ClientEng/Mac/Active_Directory
+-------
+USAGE: adtool status|configure|remove|fix-prefs|set-computer-name
+status:            Returns the status of this computer's Active Directory configuration.
+configure:         Binds this computer to the Amazon domain, setting preferences to match Amazon requirements.
+remove:            Removes this computer from Active Directory.
+fix-prefs:         Sets the AD plugin preferences to match Amazon requirements.
+				   Use only when already bound, but when prefs are not correct.
+set-computer-name: Sets the computer's name (including local host and host names) per Amazon defaults.
+-------
+Possible values for the status are:
+1. bound: This computer is communicating with the Amazon domain.
+2. maybe-bound: This computer's configuration indicates it is bound, but no PDC was available to test.
+   Note: This state is expected when configuration indicates the computer is bound but isn't on the Amazon network.
+   This status may also be returned when configuration indicates bound, but DNS nameservers are manually set to non-Amazon ones.
+3. not-bound: This computer is either not bound or not communicating with the Amazon domain.
+   Note: dsconfigad may still indicate bound, but lookup of a test user failed.
+   Test user lookup is only performed when a PDC is available.
+-------
+Possible values for the prefs-status are:
+1. True: Settings for cached accounts, nested admin groups, etc. match Amazon requirements.
+2. False: One or more settings for the AD plugin does not match Amazon requirements.
+   For example, mobile accounts may be off, so users won't be able to get admin rights or unlock the disk (FileVault).
+-------
+NOTES:
+1.  This tool is meant to be run by the user, whether or not the user is a local administrator.
+2.  When configuring, local Kerberos client settings are overwritten.
+3.  When configuring, the system clock should be updated by Amazon NTP servers.
+4.  When configuring, the computer's name is set according to the Amazon standard for naming Mac computers.
+
+-------
+'''
+
+def validateArgs():
+## Validates arguments, and returns true/false.
+	argsValid = False
+	global action
+	if len(sys.argv) == 2:
+		# Define args:
+		action = sys.argv[1]
+		# Validate args:
+		if action in ['status', 'configure', 'remove', 'fix-prefs', 'set-computer-name']:
+			argsValid = True		
+	# Return:
+	return argsValid
+
+def promptForBindAccountCredentials():
+# Gets the binding user credentials via prompt:
+	print "User name:"
+	adBindUser = sys.stdin.readline()
+	adBindPassword = getpass.getpass("Password:\n")
+	return adBindUser, adBindPassword
+
+def getEnvironmentVars():
+# Get the environment vars with binding user credentials:
+	try:	
+		adBindUser = os.environ['AD_DSCONFIGAD_BIND_USER']
+	except KeyError:
+		adBindUser = 'invalid'
+	try:	
+		adBindPassword = os.environ['AD_DSCONFIGAD_BIND_PASSWORD']
+	except KeyError:
+		adBindPassword = 'invalid'
+	return adBindUser, adBindPassword
+
+## MAIN FUNCTIONS
+
+def main():
+## MAIN
+	# Open mainDictionary:
+	mainDictionary = azLoadMainDictionary()
+	# Sockets paths:
+	toHelperSocketPath = mainDictionary['socketPaths']['adtool']['toHelper']
+	fromHelperSocketPath = uniquePathFromPath(mainDictionary['socketPaths']['adtool']['fromHelper'])
+	launchdSocketPath = mainDictionary['socketPaths']['adtool']['launchd']
+	# Parse args:
+	if not validateArgs():
+		azShowToolHelp()
+	else:
+		# Assemble messageArray:
+		messageArray = []
+		messageArray.append(fromHelperSocketPath)
+		messageArray.append(action)
+	# Set timeouts:
+		if action in ['status', 'fix-prefs', 'set-computer-name']:
+			# These operations are quick.  Set the helper timeout to 30 seconds.
+			helperTimeout = 30
+		else:
+			# Credentials required when binding or unbinding.
+			# Supplied credentials should be in environment; if not, prompt.
+			[adBindUser, adBindPassword] = getEnvironmentVars()
+			if (adBindUser == 'invalid') and (adBindPassword == 'invalid'):
+				logger.info('Missing environment variables.  Requesting bind name and password.')
+				[adBindUser, adBindPassword] = promptForBindAccountCredentials()
+			# Add credentials to messageArray:
+			messageArray.append(adBindUser)
+			messageArray.append(adBindPassword)
+			# Set the helper timeout to five minutes when binding or unbinding:
+			helperTimeout = 300
+		# Ask launchd to run the helper:
+		logger.info('Asking launchd to run the helper...')
+		helperLaunched = ipcSend([], launchdSocketPath)
+		if not helperLaunched:
+			logger.error('My required helper is not running.')
+		else:
+			# Send messageArray:
+			logger.info('Sending message to helper...')
+			messageSent = ipcSend(messageArray, toHelperSocketPath)
+			if not messageSent:
+				logger.error('Did not communicate with helper. It may be answering another request.  Please wait a minute then try again.')
+			else:
+				# Print messages as they come from the helper:
+				logger.info('Waiting for messages from helper.')
+				ipcReceiveMessagesFromHelper(fromHelperSocketPath, helperTimeout, azHelperIdentifier)
+
+if __name__ == '__main__':
+	global azIdentifier
+	global azHelperIdentifier
+	global logger
+	
+	azIdentifier = 'com.amazon.acme.adtool'
+	azHelperIdentifier = 'com.amazon.acme.helper.adtool'
+	logger = azLogger(azIdentifier)
+	try:
+		main()
+	except:
+		logger.error('Generic exception.')

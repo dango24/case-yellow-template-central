@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Version</key>
+	<string>1.5.0.7</string>
+	<key>azProductIdentifier</key>
+	<string>com.amazon.acme.quarantine</string>
+	<key>azConfigDir</key>
+	<string>/usr/local/amazon/var/quarantine</string>
+	<key>azModulesDir</key>
+	<string>/usr/local/amazon/libexec/quarantine</string>
+	<key>azModuleOutputDir</key>
+	<string>/Library/Preferences</string>
+	<key>taniumSemaphorePath</key>
+	<string>/private/var/.taniumState</string>
+	<key>infoSecSemaphoresDir</key>
+	<string>/private/var/compliance/status</string>
+	<key>infoSecSemaphorePathRecipe</key>
+	<string>/private/var/compliance/status/__module__.__moduleState__</string>
+	<key>taniumRecipeStr</key>
+	<string>MAC|__OSPatch__|__3PPatch__|__Crypto__|__Malware__|__Firewall__|NOT IMPLEMENTED</string>
+	<key>stateLabelsDict</key>
+	<dict>
+		<key>-1</key>
+		<string>NON-COMPLIANT, IN-ISOLATION</string>
+		<key>0</key>
+		<string>NON-COMPLIANT, ISOLATION-CANDIDATE</string>
+		<key>1</key>
+		<string>NON-COMPLIANT</string>
+		<key>3</key>
+		<string>NON-COMPLIANT, IN-GRACE</string>
+		<key>7</key>
+		<string>COMPLIANT</string>
+		<key>8</key>
+		<string>NO-DATA-INITIAL-STATE</string>
+		<key>taniumMappings</key>
+		<dict>
+			<key>-1</key>
+			<string>NO</string>
+			<key>0</key>
+			<string>NO</string>
+			<key>1</key>
+			<string>NO</string>
+			<key>3</key>
+			<string>YES</string>
+			<key>7</key>
+			<string>YES</string>
+			<key>8</key>
+			<string>ERROR</string>
+		</dict>
+		<key>infoSecMappings</key>
+		<dict>
+			<key>-1</key>
+			<string>isolated</string>
+			<key>0</key>
+			<string>isolationcandidate</string>
+			<key>1</key>
+			<string>noncompliant</string>
+			<key>3</key>
+			<string>compliant</string>
+			<key>7</key>
+			<string>compliant</string>
+			<key>8</key>
+			<string>error</string>
+		</dict>
+	</dict>
+	<key>trustedCertificateAuthorities</key>
+	<array>
+		<string>Amazon.com Internal Root Certificate Authority</string>
+		<string>Amazon.com Corporate Systems Certificate Authority</string>
+		<string>Amazon Corporate Systems Certificate Authority G2 01</string>
+		<string>Amazon Corporate Systems Certificate Authority G2 02</string>
+		<string>Amazon.com InfoSec CA G2</string>
+		<string>Amazon.com InfoSec CA G3</string>
+		<string>Amazon.com IT Security CA</string>
+	</array>
+	<key>caCertPath</key>
+	<string>/private/var/run/com.amazon.acme.quarantine.cert.ca.pem</string>
+	<key>dcCertPath</key>
+	<string>/private/var/run/com.amazon.acme.quarantine.cert.dc.pem</string>
+	<key>vpnInterface</key>
+	<string>utun0</string>
+	<key>dhcpServers</key>
+	<array>
+		<string>10.4.4.10</string>
+		<string>10.49.21.30</string>
+		<string>172.24.20.150</string>
+		<string>10.47.107.143</string>
+		<string>10.47.107.101</string>
+		<string>10.47.59.40</string>
+		<string>10.43.126.136</string>
+		<string>10.1.227.5</string>
+		<string>10.1.227.132</string>
+		<string>10.1.227.79</string>
+		<string>10.1.227.210</string>
+		<string>172.26.113.45</string>
+		<string>172.26.113.145</string>
+		<string>10.1.4.210</string>
+		<string>10.1.5.82</string>
+	</array>
+	<key>firewallRecipes</key>
+	<dict>
+		<key>incoming</key>
+		<string>pass in inet proto {__proto__} from __net__ port __port__ to any keep state
+</string>
+		<key>outgoing</key>
+		<string>pass out inet proto {__proto__} from any to __net__ port __port__ keep state
+</string>
+	</dict>
+	<key>quarantineRequestRecipe</key>
+	<string>?action=__action__%26uuid=__uuid__%26hostname=__hostname__%26reason=__reasons__%26platform=MAC</string>
+	<key>exponentialBackoffVariables</key>
+	<dict>
+		<key>minimumWait</key>
+		<integer>60</integer>
+		<key>maximumWait</key>
+		<integer>3600</integer>
+		<key>numberOfTries</key>
+		<integer>10</integer>
+	</dict>
+</dict>
+</plist>

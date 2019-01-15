@@ -1,0 +1,15 @@
+requests_kerberos/__init__.py,sha256=SZW-eTySvajt8rkNWlrE4085nGph7xRmjb6mmkj15VY,843
+requests_kerberos/compat.py,sha256=4fzgtpsx7DSgJqRwBttljt8rKrw_aPkcsprEZr4BXDE,385
+requests_kerberos/exceptions.py,sha256=mp_WLuogilfKcVeagWXWIYNWsm-jIBODwATZoU5Qa24,243
+requests_kerberos/kerberos_.py,sha256=N3ruNIBQTkxuZqPrlwvFBJValXShRvWPAHPQCALils8,11049
+requests_kerberos-0.7.0.dist-info/DESCRIPTION.rst,sha256=3H9kkg10IpdwkwfuhV7o7BwMr3vTn1C8ZV2Qv9R19M8,4044
+requests_kerberos-0.7.0.dist-info/METADATA,sha256=zsu8JKw31rCRK81Tvhvg4TbFgq0UEkur8AogUqjeAVY,4423
+requests_kerberos-0.7.0.dist-info/metadata.json,sha256=R19Hz3YntHmKtb-W1EwvTBrxn2_TT0cVtYX5vm1frws,610
+requests_kerberos-0.7.0.dist-info/RECORD,,
+requests_kerberos-0.7.0.dist-info/top_level.txt,sha256=Mf6-ZGYf-jtIcDbD6nxzAZhUpIOMp4w27rv8YtSL8d4,18
+requests_kerberos-0.7.0.dist-info/WHEEL,sha256=AvR0WeTpDaxT645bl5FQxUK6NPsTls2ttpcGJg3j1Xg,110
+requests_kerberos-0.7.0.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+requests_kerberos/exceptions.pyc,,
+requests_kerberos/__init__.pyc,,
+requests_kerberos/kerberos_.pyc,,
+requests_kerberos/compat.pyc,,

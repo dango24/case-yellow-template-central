@@ -1,0 +1,8 @@
+{
+  "event_types": {
+    "NetworkCheckAgent": {
+      "sink": "SQS",
+      "target": "https://sqs.us-west-2.amazonaws.com/520180966349/appneta-prod"
+    }
+  }
+}

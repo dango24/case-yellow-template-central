@@ -1,0 +1,41 @@
+{
+    "support_files": {
+        "com.amazon.UpdateBadger.exceptions.plist": {
+            "hash_algo": "sha256", 
+            "hash": null, 
+            "name": "com.amazon.UpdateBadger.exceptions.plist", 
+            "filepath": "/Library/Preferences/com.amazon.UpdateBadger.exceptions.plist"
+        }
+    }, 
+    "last_known_noncompliant": "2019-01-14 10:06:59", 
+    "name": "ThirdPartyMacOS", 
+    "last_known_compliant": "2019-01-15 10:33:47", 
+    "last_compliance_status": 4, 
+    "last_remediation_result": {
+        "status_codes": null, 
+        "data": null, 
+        "start_date": "2018-07-10 11:33:23", 
+        "end_date": "2018-07-10 11:33:23", 
+        "execution_status": 0
+    }, 
+    "identifier": "thirdparty", 
+    "last_evaluation_result": {
+        "support_files": {
+            "com.amazon.UpdateBadger.exceptions.plist": {
+                "hash_algo": "sha256", 
+                "hash": null, 
+                "name": "com.amazon.UpdateBadger.exceptions.plist", 
+                "filepath": "/Library/Preferences/com.amazon.UpdateBadger.exceptions.plist"
+            }
+        }, 
+        "first_failure_date": null, 
+        "end_date": "2019-01-15 10:33:47", 
+        "compliance_status": 4, 
+        "start_date": "2019-01-15 10:33:47", 
+        "version": "1.1", 
+        "status_codes": null, 
+        "compliance_deadline": null, 
+        "isolation_deadline": null, 
+        "execution_status": 1
+    }
+}

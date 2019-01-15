@@ -1,0 +1,17 @@
+{
+    "files": {
+        "config": {
+            "filepath": "/usr/local/amazon/var/acme/manifests/config/aea-config.json", 
+            "update_frequency": 21600, 
+            "filename": "config"
+        }, 
+        "com.amazon.UpdateBadger.manifest.plist": {
+            "filepath": "/Library/Preferences/com.amazon.UpdateBadger.manifest.plist", 
+            "update_frequency": 21600, 
+            "filename": "com.amazon.UpdateBadger.manifest.plist"
+        }
+    }, 
+    "interval": 300, 
+    "last_change": "2017-01-01T00:00:00", 
+    "execution_skew": 60 
+}

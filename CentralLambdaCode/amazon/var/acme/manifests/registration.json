@@ -1,0 +1,6 @@
+{
+    "registrar_address": "karl-registrar-prod.corp.amazon.com", 
+    "secret": null, 
+    "registrar_url": null,
+    "registrar_enabled" : true
+}

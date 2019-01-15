@@ -1,0 +1,418 @@
+#!/System/Library/Frameworks/Python.framework/Versions/Current/bin/python
+
+## networkaccesstool
+## Written by Gerrit DeWitt (gerritd@amazon.com)
+## Modified by Jason Simmons (jasosimm@amazon.com)
+## Modified by LJ Cline (joscline@amazon.com)
+## Version 2.9.8.5 - 2018-10-25 Copyright Amazon
+
+import os, pwd, sys, time, datetime, uuid
+sys.path.insert(0,'/usr/local/amazon/libexec/acme')
+from common_acme import *
+from common_acme_crypto import *
+
+## SUBROUTINES
+
+def azShowToolHelp():
+## Displays syntax help.
+	print '''
+-------
+Network Access Tool (networkaccesstool):  Gets status of, creates, or destroys configurations 
+for Amazon Ethernet and Wi-Fi networks using 802.1X EAP-TLS.
+Version 2.9.8.4d Copyright Amazon
+https://w.amazon.com/index.php/ClientEng/Mac/AssistantsAndAutomations
+https://w.amazon.com/index.php/ClientEng/Mac/WiFiAnd8021X
+-------
+USAGE: networkaccesstool status|configure|remove
+status: Returns the status of Amazon 802.1X EAP-TLS configuration.
+configure: Creates a machine certificate and 802.1X configuration profile, then installs the profile.
+remove: Removes the configuration profile containing the machine certificate and 802.1X details.
+-------
+Possible states returned by this tool are:
+1.  ok: a network access configuration profile with valid certificate is present.
+2.  expiring: the certificate in the network access configuration profile will soon expire.
+3.  expired: the certificate in the network access configuration profile has expired.
+4.  not-found: no suitable network access configuration profile found.
+-------
+NOTES:
+1.  This tool requires that the computer be bound to Active Directory.
+2.  Use of the configure and remove verbs requires root.
+3.  Use of the create verb is limited to states 2-4.
+-------
+'''
+
+def validateArgs():
+## Validates arguments, and returns true/false.
+	# Default:
+	argsValid = False
+	global action
+	if len(sys.argv) == 2:
+		# Define args:
+		action = sys.argv[1]
+		# Validate args:
+		if ( action == 'status' or action == 'configure' or action == 'remove' or action == 'force-renew'):
+			argsValid = True		
+	# Return:
+	return argsValid
+
+def checkForNetworkAccessProfile(computerAccount):
+## Determines if the mobileconfig file for network access is installed.
+## Extracts expiry date for certificate.
+	# Defaults:
+	profileIsInstalled = False
+	expectedProfileIdentifier = "com.amazon.profile.networkAccessFor." + str(computerAccount)
+	expectedPayloadIdentifierPrefix = "com.amazon.profile.payload.security.pkcs12." + str(computerAccount) + "."
+	profilePayloadArray = []
+	computerProfilesArray = listConfigurationProfilesForComputer()
+	# Default expiry date is now (for cases where the profile is not found):
+	profileExpirationDate = datetime.datetime.utcnow()
+	# Iterate through profiles:
+	for profile in computerProfilesArray:
+		if profile['ProfileIdentifier'] == expectedProfileIdentifier:
+			profilePayloadArray = profile['ProfileItems']
+			break
+	for payload in profilePayloadArray:
+		if payload['PayloadIdentifier'].find(expectedPayloadIdentifierPrefix) != -1:
+			profileIsInstalled = True
+			profileExpirationDateStr = payload['PayloadIdentifier'].replace(expectedPayloadIdentifierPrefix,'').replace('Z','')
+			profileExpirationDate = datetime.datetime.strptime(profileExpirationDateStr,'%Y%m%d%H%M%S')
+	# Return:
+	return profileIsInstalled, profileExpirationDate
+		
+def mainVerificationRoutine(computerAccount):
+# Determines status of the computer's certificate and 802.1X config: not-found, expiring, expired, ok.
+	expirationThreshold = mainDictionary['certificateExtensionsDict']['expirationThreshold']
+	# Defaults:
+	status = "verification-in-progress"
+	nowPoint = datetime.datetime.utcnow()
+	expirationCheckPoint = nowPoint + datetime.timedelta(seconds=int(expirationThreshold))
+	# Determine if the network access profile is installed:
+	[profileIsInstalled, profileExpirationDate] = checkForNetworkAccessProfile(computerAccount)
+	if  not profileIsInstalled:
+		logger.debug('Network access profile not found.')
+		status = "not-found"
+	else:
+		# Check for expiring/expired profile:
+		if profileExpirationDate < expirationCheckPoint:
+			status = "expiring"
+			if profileExpirationDate < nowPoint:
+				status = "expired"
+		else:
+			status = "ok"
+	# Return:
+	return status, profileExpirationDate
+
+def createAndInstallNetworkAccessProfile(computerAccount, adDomain, p12Path, p12Password, certExpirationDate, configProfilePath, ssidList):
+## 1. Builds the mobileconfig file for network access.
+## 2. Installs the configuration profile by calling installConfigurationProfile().
+	# Defaults:
+	installedConfigProfile = False
+	# Read p12Contents from p12Path:
+	p12FileObj = open(p12Path,'r')
+	p12Contents = p12FileObj.read()
+	p12FileObj.close()
+	if not p12Contents:
+		logger.error('createAndInstallNetworkAccessProfile: Could not read PKCS12 contents.')
+	else:
+		# Array of payloads for profile:
+		profilePayloadArray = []
+		# Generate UUID for the certificate payload:
+		machineCertificatePayloadUuid = str(uuid.uuid1()).upper()
+		# Populate certificate payload:
+		payloadCertDict = {}
+		payloadCertDict['PayloadContent'] = plistlib.Data(p12Contents)
+		payloadCertDict['PayloadUUID'] = machineCertificatePayloadUuid
+		payloadCertDict['Password'] = p12Password
+		payloadCertDict['PayloadType'] = "com.apple.security.pkcs12"
+		payloadCertDict['PayloadVersion'] = int(1)
+		payloadCertDict['PayloadIdentifier'] = "com.amazon.profile.payload.security.pkcs12." + str(computerAccount) + "." + str(certExpirationDate)
+		payloadCertDict['PayloadDescription'] = "For 802.1X network access."
+		payloadCertDict['PayloadOrganization'] = "Amazon"
+		payloadCertDict['PayloadDisplayName'] = "Machine Certificate (" + str(computerAccount) +")"
+		payloadCertDict['PayloadEnabled'] = True
+		payloadCertDict['SetupModes'] = ["System"]
+		payloadCertDict['AllowAllAppsAccess'] = True
+		payloadCertDict['KeyIsExtractable'] = False
+		# Add certificate payload to profilePayloadArray:
+		profilePayloadArray.append(payloadCertDict)
+		# Loop through Wi-Fi SSIDs, creating a payload for each if this Mac has Wi-Fi.
+		# Systems lacking Wi-Fi will not install our profile if a com.apple.wifi.managed payload is present!
+		if computerHasBuiltInWiFi():
+			for ssid in ssidList:
+				# Generate UUID for this network payload:
+				wifiPayloadUuid = str(uuid.uuid1()).upper()
+				# Populate payloadWiFiDict:
+				payloadWiFiDict = {}
+				payloadWiFiDict['PayloadEnabled'] = True
+				payloadWiFiDict['SSID_STR'] = ssid;
+				payloadWiFiDict['PayloadUUID'] = wifiPayloadUuid;
+				payloadWiFiDict['PayloadCertificateUUID'] = machineCertificatePayloadUuid;
+				payloadWiFiDict['PayloadType'] = "com.apple.wifi.managed"
+				payloadWiFiDict['PayloadVersion'] = int(1)
+				payloadWiFiDict['PayloadIdentifier'] = "com.amazon.profile.payload.wifi.managed." + str(ssid)
+				payloadWiFiDict['PayloadDescription'] = "Uses machine certificate."
+				payloadWiFiDict['PayloadOrganization'] = "Amazon"
+				payloadWiFiDict['PayloadDisplayName'] = "Wi-Fi Settings (" + str(ssid) +")"
+				payloadWiFiDict['EncryptionType'] = "WPA"
+				payloadWiFiDict['HIDDEN_NETWORK'] = False
+				payloadWiFiDict['ProxyType'] = "None"
+				payloadWiFiDict['Interface'] = "BuiltInWireless"
+				payloadWiFiDict['AutoJoin'] = True
+				payloadWiFiDict['SetupModes'] = ["System"]
+				payloadWiFiDict['EAPClientConfiguration'] = {}
+				payloadWiFiDict['EAPClientConfiguration']['EAPFASTUsePAC'] = False
+				payloadWiFiDict['EAPClientConfiguration']['EAPFASTProvisionPACAnonymously'] = False
+				payloadWiFiDict['EAPClientConfiguration']['EAPFASTProvisionPAC'] = False
+				payloadWiFiDict['EAPClientConfiguration']['AcceptEAPTypes'] = [13]
+				payloadWiFiDict['EAPClientConfiguration']['TLSCertificateIsRequired'] = True
+				payloadWiFiDict['EAPClientConfiguration']['TLSTrustedServerNames'] = ["*.ant.amazon.com", "radwpa2uw2a02R1.ant.amazon.com", "radwpa2uw2a02R2.ant.amazon.com", "fc-wifi-radius.amazon.com", "aftremotewireless.amazon.com", "Amazon Corporate Systems Certificate Authority G2 01", "Amazon Corporate Systems Certificate Authority G2 02", "Amazon.com InfoSec CA G3", "fcnacradius.amazon.com"]
+				payloadWiFiDict['EAPClientConfiguration']['UserName'] = 'host/'+computerAccount.replace('$','')+'.'+adDomain
+				payloadWiFiDict['EAPClientConfiguration']['UserPassword'] = ''
+				payloadWiFiDict['EAPClientConfiguration']['PayloadCertificateAnchorUUID'] = ["Ignored"]
+				# Add this network payload to profilePayloadArray:
+				profilePayloadArray.append(payloadWiFiDict)
+		# Create Ethernet payload.
+		# Generate UUID for this network payload:
+		ethernetPayloadUuid = str(uuid.uuid1()).upper()
+		# Populate payloadEthernetDict:
+		payloadEthernetDict = {}
+		payloadEthernetDict['PayloadEnabled'] = True
+		payloadEthernetDict['PayloadUUID'] = ethernetPayloadUuid;
+		payloadEthernetDict['PayloadCertificateUUID'] = machineCertificatePayloadUuid;
+		payloadEthernetDict['PayloadType'] = "com.apple.firstactiveethernet.managed"
+		payloadEthernetDict['PayloadVersion'] = int(1)
+		payloadEthernetDict['PayloadIdentifier'] = "com.amazon.profile.payload.firstactiveethernet.managed"
+		payloadEthernetDict['PayloadDescription'] = "Uses machine certificate."
+		payloadEthernetDict['PayloadOrganization'] = "Amazon"
+		payloadEthernetDict['PayloadDisplayName'] = "802.1X Ethernet Settings"
+		payloadEthernetDict['HIDDEN_NETWORK'] = False
+		payloadEthernetDict['ProxyType'] = "None"
+		payloadEthernetDict['EncryptionType'] = "Any"
+		payloadEthernetDict['Interface'] = "FirstActiveEthernet"
+		payloadEthernetDict['AutoJoin'] = True
+		payloadEthernetDict['SetupModes'] = ["System"]
+		payloadEthernetDict['EAPClientConfiguration'] = {}
+		payloadEthernetDict['EAPClientConfiguration']['EAPFASTUsePAC'] = False
+		payloadEthernetDict['EAPClientConfiguration']['EAPFASTProvisionPACAnonymously'] = False
+		payloadEthernetDict['EAPClientConfiguration']['EAPFASTProvisionPAC'] = False
+		payloadEthernetDict['EAPClientConfiguration']['AcceptEAPTypes'] = [13]
+		payloadEthernetDict['EAPClientConfiguration']['TLSCertificateIsRequired'] = True
+		payloadEthernetDict['EAPClientConfiguration']['TLSTrustedServerNames'] = ["*.ant.amazon.com", "radwpa2uw2a02R1.ant.amazon.com", "radwpa2uw2a02R2.ant.amazon.com", "fc-wifi-radius.amazon.com", "aftremotewireless.amazon.com", "Amazon Corporate Systems Certificate Authority G2 01", "Amazon Corporate Systems Certificate Authority G2 02", "Amazon.com InfoSec CA G3", "fcnacradius.amazon.com"]
+		payloadEthernetDict['EAPClientConfiguration']['PayloadCertificateAnchorUUID'] = ["Ignored"]
+		payloadEthernetDict['EAPClientConfiguration']['UserName'] = 'host/'+computerAccount.replace('$','')+'.'+adDomain
+		payloadEthernetDict['EAPClientConfiguration']['UserPassword'] = ''
+		# Add this network payload to profilePayloadArray:
+		profilePayloadArray.append(payloadEthernetDict)
+		profilePayloadUuid = str(uuid.uuid1()).upper()
+		# Populate profile:
+		profileDict = {}
+		profileDict['PayloadContent'] = profilePayloadArray
+		profileDict['PayloadUUID'] = profilePayloadUuid;
+		profileDict['PayloadType'] = "Configuration"
+		profileDict['PayloadVersion'] = int(1)
+		profileDict['PayloadIdentifier'] = "com.amazon.profile.networkAccessFor." + str(computerAccount)
+		profileDict['PayloadDescription'] = "Required to access Amazon networks."
+		profileDict['PayloadOrganization'] = "Amazon"
+		profileDict['PayloadDisplayName'] = "Amazon Network Access (" + str(computerAccount) +")"
+		profileDict['PayloadScope'] = "System"
+		profileDict['PayloadRemovalDisallowed'] = False
+		# Write profileDict to configuration profile:
+		azWritePlist(profileDict, configProfilePath)
+		# Install configuration profile:
+		installedConfigProfile = installConfigurationProfile(configProfilePath)
+	# Return:
+	return installedConfigProfile
+
+def mainConfigurationRoutine(computerAccount,adDomain,certTemplate,configProfilePath,pKeyPath,reqPath,p12Path):
+# Does the following:
+# 1. Generates a machine key and certificate request - generateCSR().
+# 2. Submits CSR to a certificate server for signing and receives certificate - uploadCSRAndDownloadSignedCert().
+# 3. Creates a pkcs12 file - createPKCS12().
+# 4. Configures system for network access - createAndInstallNetworkAccessProfile().
+	openSSLDict = mainDictionary['openSSLConf']
+	keyHash = str( mainDictionary['identityDetailsDict']['keyHash'] )
+	keyBits = int( mainDictionary['identityDetailsDict']['keyBits'] )
+	caRequestDetailsDict = mainDictionary['caRequestDetailsDict']
+	ssidList = mainDictionary['wifiSsidList']
+	identityNameRecipe = mainDictionary['identityDetailsDict']['identityNameRecipe']
+	# Default:
+	configurationComplete = False
+	problem = 'no-problem'
+	# Generate private key and certificate request:
+	logger.info('Generating private key and certificate request.')
+	if not generateCSR(computerAccount, openSSLDict, keyBits, keyHash, pKeyPath, reqPath):
+		logger.error('Could not generate certificate request.')
+		problem = 'could-not-generate-csr'
+	else:
+		# Upload certificate request:
+		logger.info('Uploading certificate request.')
+		[uploadResult, certificateResult] = uploadCSRAndDownloadSignedCert(caRequestDetailsDict, certTemplate, reqPath)
+		if not uploadResult:
+			logger.error('Could not upload certificate request.')
+			problem = 'could-not-upload-csr'
+		else:
+			# Create pkcs12:
+			logger.info('Creating p12.')
+			friendlyName = identityNameRecipe.replace('__userName__',computerAccount)
+			[havePkcs12,certExpirationDate,p12Password] = createPKCS12(friendlyName, certificateResult, pKeyPath, p12Path) 
+			if not havePkcs12:
+				logger.error('Problem downloading the computer certificate or creating p12.')
+				problem = 'could-not-download-or-create-p12'
+			else:
+				# Create and import configuration profile:
+				logger.info('Configuring system for network access.')
+				configurationComplete = createAndInstallNetworkAccessProfile(computerAccount, adDomain, p12Path, p12Password, certExpirationDate, configProfilePath, ssidList)
+				
+				if not configurationComplete:
+					logger.error('Could not configure system for network access.')
+					problem = 'profile-installation-error'
+				else:
+					logger.info('Configuration complete.')
+	# Return:
+	return configurationComplete, problem
+
+def main():
+## MAIN
+	# Open mainDictionary:
+	global mainDictionary
+	mainDictionary = azLoadMainDictionary()
+	adDomain = mainDictionary['adDomain']
+	adDomainSearchPath = mainDictionary['adDomainSearchPath']
+	# Parse args:
+	if not validateArgs():
+		azShowToolHelp()
+	else:
+		# Determine if the user is root.
+		[haveRootUser, userHomePath] = validateUserIsRoot()
+		if haveRootUser:
+			prefsPathPrefix = ''
+		else:
+			prefsPathPrefix = userHomePath
+		# Validate AD computer record.
+		[computerAccountValid, computerAccount] = validateComputerAccount(adDomainSearchPath)
+		# System domain paths:
+		pKeyPath = mainDictionary['privateKeyPath'].replace('~','').replace('__azIdentifier__',azIdentifier)
+		reqPath = mainDictionary['certRequestPath'].replace('~','').replace('__azIdentifier__',azIdentifier)
+		p12Path = mainDictionary['p12FilePath'].replace('~','').replace('__azIdentifier__',azIdentifier)
+		configProfilePath = mainDictionary['configProfilePath'].replace('~','').replace('__azIdentifier__',azIdentifier)
+		certTemplate = mainDictionary['caRequestDetailsDict']['machineCertTemplate']
+		# Default states for other variables we write:
+		problem = 'no-problem'
+		lastCheck = datetime.datetime.utcnow()
+		if not computerAccountValid:
+			# Invalid computer.
+			logger.error('Could not read computer account from Active Directory.')
+			problem = 'invalid-computer'
+		else:	
+			# Initial verification:
+			[status, profileExpirationDate] = mainVerificationRoutine(computerAccount)
+			logger.info('Network configuration status: ' + status)
+			# Report expiration date if certificate present:
+			if status != 'not-found':
+				logger.info('Certificate expiration date: ' + str(profileExpirationDate))
+			# Configuration or removal:
+			if action != 'status':
+				# Root check:
+				if not haveRootUser:
+					# Root required for configure and remove.
+					logger.error('This tool must be run by root to make changes.')
+				else:
+					# Clean up file paths (system domain only):
+					ensureDeleted([pKeyPath, reqPath, p12Path, configProfilePath])
+					# Defaults - configuration or removal:
+					configurationSuccessful = False
+					removalSuccessful = False
+					# Configuration:
+					if action == 'configure':
+						if status == 'ok':
+							logger.info('A network access profile already exists for this computer.')
+						else:
+							# Request Kerberos TGT for computer account.
+							if not getComputerAcctTGT(computerAccount,adDomain):
+								logger.error('Could not get TGT for computer account.')
+							else:
+								# Determine PDC domain controller:
+								domainController = findDomainController(adDomain)
+								if domainController == 'invalid':
+									problem = 'could-not-determine-pdc'
+									logger.error('Could not find a PDC.  Is this computer on the Amazon network?  Are DNS search domains correct?')
+								else:
+									logger.debug('Domain controller is: ' + domainController)
+									# Determine certificate server:
+									# Attempt to create a network access profile:
+									logger.info('Running configuration routine.')
+									[configurationSuccessful, problem] = mainConfigurationRoutine(computerAccount,adDomain,certTemplate,configProfilePath,pKeyPath,reqPath,p12Path)
+									if not configurationSuccessful:
+										logger.error('Problem running main configuration routine.' )
+									# Destroy Kerberos TGT for computer account.
+									if not destroyComputerAcctTGT(computerAccount,adDomain):
+										logger.error('Could not destroy TGT for computer account.')
+					# Removal:
+					if action == 'remove':
+						logger.info('Running routine to remove configuration.')
+						[removalSuccessful, problem] = removeConfigurationProfile("com.amazon.profile.networkAccessFor")
+						if not removalSuccessful:
+							logger.error('Problem running routine to remove configuration.' )
+					# force renewal:
+					if action == 'force-renew':
+						status = 'expired'
+						if not getComputerAcctTGT(computerAccount,adDomain):
+							logger.error('Could not get TGT for computer account.')
+						else:
+							# Determine PDC domain controller:
+							domainController = findDomainController(adDomain)
+							if domainController == 'invalid':
+								problem = 'could-not-determine-pdc'
+								logger.error('Could not find a PDC.  Is this computer on the Amazon network?  Are DNS search domains correct?')
+							else:
+								logger.debug('Domain controller is: ' + domainController)
+								# Determine certificate server:
+								# Attempt to create a network access profile:
+								logger.info('Running configuration routine.')
+								[configurationSuccessful, problem] = mainConfigurationRoutine(computerAccount,adDomain,certTemplate,configProfilePath,pKeyPath,reqPath,p12Path)
+								if not configurationSuccessful:
+									logger.error('Problem running main configuration routine.' )
+							# Destroy Kerberos TGT for computer account.
+								if not destroyComputerAcctTGT(computerAccount,adDomain):
+									logger.error('Could not destroy TGT for computer account.')
+					# Secondary verification after successful configuration or removal:
+					if configurationSuccessful or removalSuccessful:
+						[status, profileExpirationDate] = mainVerificationRoutine(computerAccount)
+						if not (action == 'configure' and status == 'ok') and not (action == 'remove' and status == 'not-found') and not (action == 'force-renew' and status == 'ok'):
+							logger.error('Secondary verification procedure failed.' )
+						else:
+							logger.info('Network configuration status: ' + status)
+							if status != 'not-found':
+								logger.info('Certificate expiration date: ' + str(profileExpirationDate))
+					# Clean up file paths (system domain only):
+					ensureDeleted([pKeyPath, reqPath, p12Path, configProfilePath])
+		# Update prefs.
+		# Preference file is system domain when action is configure or remove.
+		# Preference file is user domain when action is status.  Required for supporting the Amazon prefs pane.
+		assistantPrefsPath = mainDictionary['prefsFile'].replace('~',prefsPathPrefix).replace('__azIdentifier__',azIdentifier)
+		try:
+			assistantPrefsDict = azReadPlist(assistantPrefsPath)
+		except:
+			assistantPrefsDict = {}
+		# These keys may be missing if there's a problem:
+		try:
+			assistantPrefsDict['expirationDate'] = profileExpirationDate
+			assistantPrefsDict['lastCheck'] = lastCheck
+			assistantPrefsDict['status'] = status
+		except:
+			logger.debug('No status information.' )
+		# Problem key should always be present:
+		assistantPrefsDict['problem'] = problem
+		# Write prefs file:
+		azWritePlist(assistantPrefsDict, assistantPrefsPath)
+
+if __name__ == '__main__':
+	global azIdentifier
+	global logger
+	
+	azIdentifier = 'com.amazon.acme.networkaccesstool'
+	logger = azLogger(azIdentifier)
+	try:
+			main()
+	except:
+		logger.error('Generic exception.')

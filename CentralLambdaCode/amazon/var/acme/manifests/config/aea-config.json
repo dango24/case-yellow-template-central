@@ -1,0 +1,14 @@
+{
+	"hash_whitelist": ["6c34c781f30c874ef19130783a38bfc990a42410bf2fe419f6d5b103a31dc2be", "263e20571c33e6f7c1814057eef0c41fc6741c8c4df742f182a1cc81636eebc6", "daefeeea0b4ddd73189ad50b4e7d9fcbe24198eec28c8f2a01d7a592b525e05d"],
+	"config_refresh_interval": 3600,
+	"cookie_refresh_interval": 70,
+	"cookie_expiry": 900,
+	"healthcheck_interval": 20,
+	"auth_domain": ["https://midway-auth-integ.us-east-1.amazon.com", "https://midway-auth-integ.aka.amazon.com", "https://midway-auth.amazon.com", "https://idp.federate.amazon.com", "https://federate-int.corp.amazon.com", "https://federate-dev.corp.amazon.com", "https://idp-integ.federate.amazon.com"],
+	"tt_link": "https://tt.amazon.com/quicklink/Q000735816",
+    "chrome_extension_id": "bkbighdlgofgdhcjnhocalbkiehhpdei",
+    "chromium_extension_id" : "bkbighdlgofgdhcjnhocalbkiehhpdei",
+    "firefox_extension_id": "amazon_enterprise_access@amazon",
+    "extension_url": "https://browser-plugin.amazon-corp.com/",
+	"patch_blacklist":"aws.amazon.com,aws-bpc-readonly.amazon.com,privatebrands.corp.amazon.com,aiq.integ.amazon.com,aiq.iad.amazon.com,aiq.aws.amazon.com,aiq-buyer-alpha-iad.aka.amazon.com,aiq-buyer-beta-iad.aka.amazon.com,aiq-buyer-gamma-iad.aka.amazon.com,aiq-buyer-prod-iad.aka.amazon.com,aiq-expert-alpha-iad.aka.amazon.com,aiq-expert-beta-iad.aka.amazon.com,aiq-expert-gamma-iad.aka.amazon.com,aiq-expert-prod-iad.aka.amazon.com"
+}

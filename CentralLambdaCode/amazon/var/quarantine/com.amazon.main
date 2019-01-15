@@ -1,0 +1,6 @@
+
+anchor "com.amazon.multihome"
+load anchor "com.amazon.multihome" from "/usr/local/amazon/var/quarantine/com.amazon.multihome"
+
+anchor "com.amazon.internal"
+load anchor "com.amazon.internal" from "/usr/local/amazon/var/quarantine/com.amazon.internal"

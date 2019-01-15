@@ -1,0 +1,13 @@
+{
+    "secure": true, 
+    "auth_token_file": "/usr/local/amazon/var/acme/run/com.ipc.securerequest.dZCQl1", 
+    "request_uuid": "e29bbef1-49e3-4f14-80c4-5756144d7099", 
+    "action": "RotateWatcherCredentials", 
+    "date": "2018-11-21 18:34:56.025197", 
+    "options": {
+        "credentials": {
+            "SecretKey": "vt2CsisBgI3gQWOMjn9aNSGiskn0z69EGLXDUTwq", 
+            "AccessKeyID": "AKIAJ5K4TKLMD63D64XA"
+        }
+    }
+}

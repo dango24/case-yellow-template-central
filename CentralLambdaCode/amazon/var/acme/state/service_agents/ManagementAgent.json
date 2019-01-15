@@ -1,0 +1,10 @@
+{
+    "last_execution": "2019-01-15 10:33:41", 
+    "identifier": "ManagementAgent", 
+    "name": "ManagementAgent", 
+    "last_execution_status": 0, 
+    "last_submission_date": "2019-01-14 14:06:47", 
+    "management_status": 2, 
+    "acme_version": "1.5.3", 
+    "random_skew": -2.5
+}

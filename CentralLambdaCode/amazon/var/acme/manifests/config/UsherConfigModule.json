@@ -1,0 +1,12 @@
+{
+    "installers": {
+        "ACME": {
+            "update_frequency": 21600
+       },
+        "ACMEGuardian": {
+            "update_frequency": 21600
+       }
+    },
+    "interval": 300,
+    "last_change": "2017-01-01T00:00:00"
+}

@@ -1,0 +1,12 @@
+[
+    {
+        "path": "module/crypto.py", 
+        "hash": "6f3fd0e5a7b15d9c46f3086cb5fb8c8ba02b6b3dea343ac09c245fcc92e85f29", 
+        "alg": "sha256"
+    }, 
+    {
+        "path": "version.json", 
+        "hash": "65d1fc5602471b670523ec2520374dc36992f3482998c9e6099f386840e42b0e", 
+        "alg": "sha256"
+    }
+]

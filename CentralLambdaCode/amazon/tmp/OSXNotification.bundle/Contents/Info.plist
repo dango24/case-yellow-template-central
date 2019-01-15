@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IABundleIdentifier</key>
+	<string>com.apple.InstallAssistant.HighSierra</string>
+	<key>ReminderIntervals</key>
+	<array>
+		<integer>604800</integer>
+		<integer>604800</integer>
+		<integer>604800</integer>
+		<integer>604800</integer>
+		<integer>604800</integer>
+		<integer>604800</integer>
+		<integer>604800</integer>
+		<integer>604800</integer>
+		<integer>604800</integer>
+		<integer>604800</integer>
+		<integer>604800</integer>
+		<integer>604800</integer>
+	</array>
+	<key>SUTags</key>
+	<array>
+		<string>SUBUNDLE:com.apple.InstallAssistant.HighSierra</string>
+		<string>CUSTOMER</string>
+	</array>
+	<key>CFBundleIdentifier</key>
+	<string>com.apple.installer.notification.macOS1013GM</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>OSXNotification</string>
+	<key>CFBundlePackageType</key>
+	<string>BNDL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1</string>
+	<key>CFBundleSupportedPlatforms</key>
+	<array>
+		<string>MacOSX</string>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>FreeSpaceRequired</key>
+	<integer>12000000000</integer>
+	<key>HumanReadableName</key>
+	<string>macOS High Sierra</string>
+	<key>ItemID</key>
+	<integer>1246284741</integer>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2017 Apple. All rights reserved.</string>
+	<key>ProductBuildVersion</key>
+	<string>17A405</string>
+</dict>
+</plist>

@@ -1,0 +1,17 @@
+doctype html
+html
+  head
+    link(href="#{appCss}", rel="stylesheet")
+  body
+    div#drag-region
+    webview#ui-container(src="#{url}" nodeintegration)
+    script(type='text/javascript').
+      onload = function() {
+        var webview = document.getElementById("ui-container");
+        webview.addEventListener("dom-ready", function() {
+          const remote = require('electron').remote;
+          if(remote.getGlobal("isDeveloperMode")) {
+            webview.openDevTools();
+          }
+        });
+      }

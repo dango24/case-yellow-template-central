@@ -1,0 +1,6 @@
+{
+    "pid": 50, 
+    "type": "daemon", 
+    "port": 9216, 
+    "address": "127.0.0.1"
+}

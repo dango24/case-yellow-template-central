@@ -1,0 +1,46 @@
+#!/usr/bin/python
+
+"""
+.. executable:: acme
+    :synopsis: Command line tool used to interogate running ACME engines. 
+    :platform: OSX, Ubuntu
+
+.. moduleauthor:: Beau Hunter <beauhunt@amazon.com>
+
+"""
+
+import sys, os
+import logging
+import socket
+
+sys.path.insert(0,"/usr/local/amazon/lib")
+
+
+
+
+import acme.cli
+
+if __name__ == "__main__":
+    try:
+        cli = acme.cli.ACMECLI(arguments = sys.argv[1:])
+        sys.exit(cli.run())
+    except socket.error:
+        message = "Error: Could not connect to ACME daemon!"
+        sys.stderr.write("{}\n".format(message))
+        sys.stderr.flush()
+        
+        if cli and cli.args and cli.args.verbose > 3:
+            raise
+        
+        sys.exit(98)
+        
+    except Exception as exp:
+        message = "An unknown error occurred: {}".format(exp.message)
+        logger = logging.getLogger()
+        logger.critical(message,exc_info=1)
+        
+        ## Log to stderr in case there's something wrong with our logger
+        sys.stderr.write("{}\n".format(message))
+        sys.stderr.flush()
+        
+        sys.exit(99)

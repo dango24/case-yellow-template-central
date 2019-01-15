@@ -1,0 +1,46 @@
+{
+  "subject_areas": {
+    "Compliance": {
+      "sink": "Kinesis",
+      "target": "standard"
+    },
+    "Auth": {
+      "sink": "Kinesis",
+      "target": "standard.auth"
+    },
+    "Network": {
+      "sink": "Kinesis",
+      "target": "standard.network"
+    },
+    "UpdateActivity": {
+      "sink": "Kinesis",
+      "target": "standard.softwareupdate"
+    },
+    "ACME": {
+      "sink": "Kinesis",
+      "target": "acme"
+    }
+  },
+  "event_types": {
+    "HeartBeat": {
+      "sink": "Kinesis",
+      "target": "standard"
+    },
+    "PluginLoadEvent": {
+      "sink": "Kinesis",
+      "target": "standard"
+    },
+    "IdleStatusEvent": {
+      "sink": "Kinesis",
+      "target": "acme.idlestatus"
+    },
+    "LocalPasswordRotation": {
+      "sink": "Kinesis",
+      "target": "acme.localpassword"
+    },
+    "LocalPasswordEscrow": {
+      "sink": "Kinesis",
+      "target": "acme.localpassword"
+    }
+  }
+}
