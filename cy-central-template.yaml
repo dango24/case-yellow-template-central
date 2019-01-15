@@ -91,10 +91,10 @@ Resources:
                 uri:
                   Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CentralNextWebSiteLambda.Arn}/invocations
                 responses:
-                  default:
-                    statusCode: '200'
+                  "default":
+                    statusCode: "200"
                     responseParameters:
-                      method.response.header.Content-Type: "'application/json'"
+                      method.response.header.Access-Control-Allow-Origin : "'*'"
                 httpMethod: "POST"
                 type: "aws"
                 requestTemplates:
