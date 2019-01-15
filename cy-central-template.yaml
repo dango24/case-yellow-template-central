@@ -95,7 +95,7 @@ Resources:
                   Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CentralNextWebSiteLambda.Arn}/invocations
                 responses: {}
                 httpMethod: "POST"
-                type: "aws_proxy"
+                type: "aws"
                 requestTemplates:
                   application/json: "#set ($root=$input.path('$')) { \"stage\": \"$root.name\", \"user-id\": \"$root.key\" }"
         x-amazon-apigateway-request-validators:
