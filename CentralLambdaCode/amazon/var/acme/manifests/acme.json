@@ -1,7 +1,0 @@
-{
-	"usher_enabled": false,
-	"usher_watcher_enabled": false,
-	"karl_registrar_enabled": true,
-    "compliance_enabled": true,
-    "mesh_enabled": false
-}

@@ -1,8 +1,0 @@
-{
-  "event_types": {
-    "WindowsLogForwardingAgent": {
-      "sink": "SNS",
-      "target": "arn:aws:sns:us-west-2:159339538005:windowseventlogs-prod"
-    }
-  }
-}

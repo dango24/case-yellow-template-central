@@ -1,8 +1,0 @@
-{
-   "subject_areas": {
-     "Usher.Acme": {
-       "sink": "Firehose",
-       "target": "acme.usher.prod"
-     }
-   }
- }
