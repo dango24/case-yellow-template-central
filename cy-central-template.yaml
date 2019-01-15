@@ -93,7 +93,10 @@ Resources:
               x-amazon-apigateway-integration:
                 uri:
                   Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CentralNextWebSiteLambda.Arn}/invocations
-                responses: {}
+                responses: {
+                  "2\\d{2}" : {
+                    "statusCode" : "200"
+                  }
                 httpMethod: "POST"
                 type: "aws"
                 requestTemplates:
