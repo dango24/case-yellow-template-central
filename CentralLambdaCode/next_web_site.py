@@ -1,6 +1,5 @@
 import requests
 
-ec2 = boto3.client('ec2')
 def handler(event, context):
     print("Received getNextSpeedTestWebSite GET request, from user: {}".format(event.user))
 
