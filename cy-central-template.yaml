@@ -96,6 +96,7 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Origin : "'*'"
                 httpMethod: "POST"
+                cors: true
                 type: "aws"
                 requestTemplates:
                   application/json: "{\"user\": \"$input.params('Case-Yellow-User')\"}"
