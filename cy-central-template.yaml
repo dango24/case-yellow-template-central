@@ -93,17 +93,17 @@ Resources:
               x-amazon-apigateway-integration:
                 uri:
                   Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CentralNextWebSiteLambda.Arn}/invocations
-                responses: {
-                  "default": {
-                    "statusCode": "200",
-                    "responseTemplates": {
-                      "application/json": "{\"user\": \"$input.params('Case-Yellow-User')\"}"
-                    }
-                  }
-                }
+                responses: {}
                 httpMethod: "POST"
                 type: "aws_proxy"
+                requestTemplates:
+                  application/json: |
+                    {
+                      "action" : "com.amazonaws.apigatewaydemo.action.RegisterDemoAction",
+                      "body" : $input.json('$')
+                    }
         x-amazon-apigateway-request-validators:
           Validate query string parameters and headers:
             validateRequestParameters: true
             validateRequestBody: false
+
