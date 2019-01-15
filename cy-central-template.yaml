@@ -99,7 +99,6 @@ Resources:
                 requestTemplates:
                   application/json: |
                     {
-                      "action" : "com.amazonaws.apigatewaydemo.action.RegisterDemoAction",
                       "body" : $input.json('$')
                     }
         x-amazon-apigateway-request-validators:
