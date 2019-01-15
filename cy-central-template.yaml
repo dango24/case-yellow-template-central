@@ -101,7 +101,7 @@ Resources:
                 requestTemplates:
                   application/json: "{\"user\": \"$input.params('Case-Yellow-User')\"}"
               responses:
-                200:
+                "200":
                   headers:
                     Access-Control-Allow-Origin:
                       type: "string"
