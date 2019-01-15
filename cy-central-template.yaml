@@ -97,10 +97,7 @@ Resources:
                 httpMethod: "POST"
                 type: "aws_proxy"
                 requestTemplates:
-                  application/json: |
-                    {
-                      "body" : $input.json('$')
-                    }
+                  application/json: "#set ($root=$input.path('$')) { \"stage\": \"$root.name\", \"user-id\": \"$root.key\" }"
         x-amazon-apigateway-request-validators:
           Validate query string parameters and headers:
             validateRequestParameters: true
