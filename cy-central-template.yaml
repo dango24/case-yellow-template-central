@@ -94,7 +94,7 @@ Resources:
                   default:
                     statusCode: '200'
                     responseParameters:
-                      method.response.header.Content-Type: "application/json"
+                      method.response.header.Content-Type: "'application/json'"
                 httpMethod: "POST"
                 type: "aws"
                 requestTemplates:
