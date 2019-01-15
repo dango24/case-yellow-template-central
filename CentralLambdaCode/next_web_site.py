@@ -1,4 +1,4 @@
-import requests
+from botocore.vendored import requests
 
 def handler(event, context):
     print("Received getNextSpeedTestWebSite GET request, from user: {}".format(event.user))
