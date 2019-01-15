@@ -35,7 +35,7 @@ Resources:
                 Resource:
                   - Sub "arn:aws:logs:${AWS::Region}:*:*"
 
-  # Lambda
+  # next-web-site
 
   CentralNextWebSiteLambda:
     Type: 'AWS::Serverless::Function'
@@ -69,9 +69,6 @@ Resources:
         Variables:
           REGION: eu-central-1
 
-
-  # Api
-
   CentralNextWebSiteApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -96,6 +93,8 @@ Resources:
                 responses:
                   default:
                     statusCode: '200'
+                    responseParameters:
+                      method.response.header.Content-Type: "application/json"
                 httpMethod: "POST"
                 type: "aws"
                 requestTemplates:
